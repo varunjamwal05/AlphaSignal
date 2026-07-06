@@ -1,102 +1,164 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Search, TrendingUp, Shield, Zap, ChevronRight, Activity } from "lucide-react";
+
+const EXAMPLE_COMPANIES = ["NVIDIA", "Apple", "Microsoft", "Tesla", "Amazon", "Alphabet", "Meta", "Netflix"];
+
+const FEATURES = [
+  { icon: Activity, title: "Real Financial Data", desc: "Live metrics from Yahoo Finance — no fabricated numbers, ever." },
+  { icon: Zap, title: "LangGraph AI Agent", desc: "Multi-node autonomous workflow with planning, reflection, and validation." },
+  { icon: Shield, title: "Reflection & Validation", desc: "AI cross-checks its own conclusions before issuing a recommendation." },
+  { icon: TrendingUp, title: "Weighted Scoring", desc: "Financial health, growth, risk, sentiment and valuation — all scored." },
+];
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleSearch = (company: string) => {
+    if (!company.trim()) return;
+    sessionStorage.setItem("research_company", company.trim());
+    router.push("/dashboard");
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Hero */}
+      <section style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "80px 24px 60px",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        {/* Background glow */}
+        <div style={{
+          position: "absolute", top: "10%", left: "50%", transform: "translateX(-50%)",
+          width: "600px", height: "400px",
+          background: "radial-gradient(ellipse at center, rgba(16, 185, 129, 0.06) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }} />
+
+        {/* Badge */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: "8px",
+          padding: "5px 14px", borderRadius: "100px",
+          background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.25)",
+          marginBottom: "32px", fontSize: "12px", fontWeight: 600, color: "var(--accent-green)",
+          letterSpacing: "0.5px",
+        }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-green)" }} className="pulse-dot" />
+          AI INVESTMENT RESEARCH AGENT
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        {/* Headline */}
+        <h1 style={{
+          fontSize: "clamp(36px, 5vw, 68px)",
+          fontWeight: 900,
+          lineHeight: 1.1,
+          letterSpacing: "-2px",
+          marginBottom: "20px",
+          maxWidth: "800px",
+        }}>
+          Research Any Stock.{" "}
+          <br />
+          <span className="gradient-text">AI-Powered. Evidence-Backed.</span>
+        </h1>
+
+        <p style={{
+          fontSize: "18px", color: "var(--text-secondary)",
+          maxWidth: "560px", lineHeight: 1.7, marginBottom: "48px",
+        }}>
+          Our autonomous LangGraph agent fetches real financial data, analyzes news sentiment, evaluates risk, and delivers a transparent investment recommendation in minutes.
+        </p>
+
+        {/* Search bar */}
+        <div style={{
+          display: "flex", gap: "12px", width: "100%", maxWidth: "600px",
+          padding: "6px 6px 6px 20px",
+          background: "var(--bg-card)", border: "1px solid var(--bg-border)",
+          borderRadius: "14px", marginBottom: "20px",
+          boxShadow: "0 4px 40px rgba(0,0,0,0.4)",
+        }}>
+          <Search size={20} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: "2px" }} />
+          <input
+            className="terminal-input"
+            style={{ background: "transparent", border: "none", padding: "0", borderRadius: "0", fontSize: "16px" }}
+            placeholder="Search company (e.g. NVIDIA, Apple, Tesla…)"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch(query)}
+            autoFocus
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+          <button
+            id="search-btn"
+            className="btn-primary"
+            style={{ flexShrink: 0, fontSize: "14px" }}
+            onClick={() => handleSearch(query)}
+            disabled={!query.trim()}
+          >
+            Analyze →
+          </button>
+        </div>
+
+        {/* Example chips */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
+          {EXAMPLE_COMPANIES.map((c) => (
+            <button key={c} onClick={() => handleSearch(c)} style={{
+              padding: "5px 14px", borderRadius: "100px",
+              background: "var(--bg-card)", border: "1px solid var(--bg-border)",
+              color: "var(--text-secondary)", fontSize: "13px", fontWeight: 500,
+              cursor: "pointer", transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => { (e.target as HTMLElement).style.borderColor = "rgba(59,130,246,0.4)"; (e.target as HTMLElement).style.color = "var(--text-primary)"; }}
+            onMouseLeave={(e) => { (e.target as HTMLElement).style.borderColor = "var(--bg-border)"; (e.target as HTMLElement).style.color = "var(--text-secondary)"; }}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Features */}
+      <section style={{ padding: "60px 24px 80px", maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
+        <div style={{ textAlign: "center", marginBottom: "48px" }}>
+          <h2 style={{ fontSize: "28px", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "12px" }}>
+            Powered by Real AI Engineering
+          </h2>
+          <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Not a chatbot. A production-grade multi-step agent with tool calling and reflection.</p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "16px" }}>
+          {FEATURES.map((f) => (
+            <div key={f.title} className="terminal-card" style={{ padding: "24px" }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: "10px",
+                background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59,130,246,0.2)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                marginBottom: "16px",
+              }}>
+                <f.icon size={20} color="var(--accent-blue)" />
+              </div>
+              <h3 style={{ fontWeight: 600, marginBottom: "8px", fontSize: "15px" }}>{f.title}</h3>
+              <p style={{ color: "var(--text-secondary)", fontSize: "13px", lineHeight: 1.6 }}>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{
+        padding: "20px 24px", textAlign: "center",
+        borderTop: "1px solid var(--bg-border)",
+        color: "var(--text-muted)", fontSize: "12px",
+      }}>
+        AlphaSignal AI Research Agent · Built with LangGraph + Next.js 15 · For educational and research purposes only
       </footer>
     </div>
   );

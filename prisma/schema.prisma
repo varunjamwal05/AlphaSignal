@@ -1,0 +1,87 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model UserPreferences {
+  id        String   @id @default(uuid())
+  theme     String   @default("dark")
+  apiKey    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CompanyCache {
+  id          String            @id @default(uuid())
+  ticker      String            @unique
+  name        String
+  profileData Json
+  financials  CachedFinancials?
+  news        CachedNews[]
+  cachedAt    DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([ticker])
+}
+
+model CachedFinancials {
+  id             String       @id @default(uuid())
+  companyCacheId String       @unique
+  companyCache   CompanyCache @relation(fields: [companyCacheId], references: [id], onDelete: Cascade)
+  revenueData    Json
+  balanceSheet   Json
+  cashFlow       Json
+  valuationData  Json
+  updatedAt      DateTime     @updatedAt
+}
+
+model CachedNews {
+  id             String       @id @default(uuid())
+  companyCacheId String
+  companyCache   CompanyCache @relation(fields: [companyCacheId], references: [id], onDelete: Cascade)
+  title          String
+  url            String
+  source         String
+  publishedAt    DateTime
+  summary        String
+  sentiment      String
+  score          Float
+
+  @@index([companyCacheId])
+  @@index([publishedAt])
+}
+
+model ResearchHistory {
+  id             String              @id @default(uuid())
+  company        String
+  ticker         String
+  recommendation String
+  score          Float
+  confidence     Float
+  summary        String
+  reportData     Json
+  citations      Json
+  createdAt      DateTime            @default(now())
+  executionLogs  AgentExecutionLog[]
+
+  @@index([ticker])
+  @@index([createdAt])
+}
+
+model AgentExecutionLog {
+  id                String          @id @default(uuid())
+  researchHistoryId String
+  researchHistory   ResearchHistory @relation(fields: [researchHistoryId], references: [id], onDelete: Cascade)
+  nodeName          String
+  status            String
+  inputPayload      Json?
+  outputPayload     Json?
+  elapsedMs         Int
+  createdAt         DateTime        @default(now())
+
+  @@index([researchHistoryId])
+}
