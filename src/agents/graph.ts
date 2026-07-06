@@ -19,8 +19,8 @@ function routeAfterCompanyResearch(state: GraphState): string {
   return state.error ? END : "financial_analysis";
 }
 
-// ── Conditional edge: route after reflection ──────────────────────────────
-function routeAfterReflection(state: GraphState): string {
+// ── Conditional edge: route after validation ──────────────────────────────
+function routeAfterValidation(state: GraphState): string {
   // Allow 1 loopback to retry research if critically insufficient data
   if (state.reflection?.requiresMoreResearch && (state.loopCount ?? 0) <= 1) {
     return "company_research";
@@ -38,7 +38,7 @@ export function buildInvestmentGraph() {
     .addNode("risk_analysis", riskAnalysisNode)
     .addNode("growth_analysis", growthAnalysisNode)
     .addNode("decision", decisionNode)
-    .addNode("reflection", reflectionNode)
+    .addNode("validate", reflectionNode)          // renamed: 'reflection' conflicts with state channel
     .addNode("report_generator", reportGeneratorNode)
     // Edge definitions
     .addEdge("__start__", "planner")
@@ -51,8 +51,8 @@ export function buildInvestmentGraph() {
     .addEdge("news_analysis", "risk_analysis")
     .addEdge("risk_analysis", "growth_analysis")
     .addEdge("growth_analysis", "decision")
-    .addEdge("decision", "reflection")
-    .addConditionalEdges("reflection", routeAfterReflection, {
+    .addEdge("decision", "validate")
+    .addConditionalEdges("validate", routeAfterValidation, {
       company_research: "company_research",
       report_generator: "report_generator",
     })

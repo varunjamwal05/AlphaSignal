@@ -1,9 +1,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // src/services/yahooFinance.ts
 // Real financial data fetching via yahoo-finance2 with graceful degradation
-// ─────────────────────────────────────────────────────────────────────────────
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import yahooFinance from "yahoo-finance2";
+import yf from "yahoo-finance2";
+const YF = (yf as any).default || yf;
+const yahooFinance = typeof YF === "function" ? new YF() : YF;
 import type {
   CompanyProfile,
   FinancialData,
@@ -20,26 +21,148 @@ function cite(section: string): Citation {
   return { source: SOURCE, type: SOURCE_TYPE, section, retrievedAt: now() };
 }
 
+// ── Well-known company name → ticker fallback map ────────────────────────────
+const KNOWN_TICKERS: Record<string, string> = {
+  apple: "AAPL",
+  microsoft: "MSFT",
+  google: "GOOGL",
+  alphabet: "GOOGL",
+  amazon: "AMZN",
+  meta: "META",
+  facebook: "META",
+  nvidia: "NVDA",
+  tesla: "TSLA",
+  netflix: "NFLX",
+  salesforce: "CRM",
+  adobe: "ADBE",
+  intel: "INTC",
+  amd: "AMD",
+  "advanced micro devices": "AMD",
+  qualcomm: "QCOM",
+  broadcom: "AVGO",
+  oracle: "ORCL",
+  ibm: "IBM",
+  "international business machines": "IBM",
+  samsung: "005930.KS",
+  tsmc: "TSM",
+  "taiwan semiconductor": "TSM",
+  visa: "V",
+  mastercard: "MA",
+  "jpmorgan": "JPM",
+  "jp morgan": "JPM",
+  "goldman sachs": "GS",
+  "bank of america": "BAC",
+  walmart: "WMT",
+  target: "TGT",
+  disney: "DIS",
+  "the walt disney": "DIS",
+  coca: "KO",
+  "coca-cola": "KO",
+  pepsi: "PEP",
+  pepsico: "PEP",
+  nike: "NKE",
+  "exxon mobil": "XOM",
+  exxon: "XOM",
+  chevron: "CVX",
+  pfizer: "PFE",
+  johnson: "JNJ",
+  "johnson & johnson": "JNJ",
+  unitedhealth: "UNH",
+  berkshire: "BRK-B",
+  "berkshire hathaway": "BRK-B",
+  "berkshire hathaway b": "BRK-B",
+  "berkshire hathaway a": "BRK-A",
+  ford: "F",
+  gm: "GM",
+  "general motors": "GM",
+  boeing: "BA",
+  caterpillar: "CAT",
+  "3m": "MMM",
+  spotify: "SPOT",
+  uber: "UBER",
+  lyft: "LYFT",
+  airbnb: "ABNB",
+  palantir: "PLTR",
+  coinbase: "COIN",
+  snowflake: "SNOW",
+  shopify: "SHOP",
+  zoom: "ZM",
+  "zoom video": "ZM",
+  slack: "CRM",
+  twilio: "TWLO",
+  crowdstrike: "CRWD",
+  datadog: "DDOG",
+  mongodb: "MDB",
+  "service now": "NOW",
+  servicenow: "NOW",
+  workday: "WDAY",
+  "square": "XYZ",
+  block: "XYZ",
+};
+
 // ── Resolve ticker symbol from company name ───────────────────────────────────
 export async function resolveTickerFromName(
   companyName: string
 ): Promise<{ ticker: string; name: string } | null> {
+  const input = companyName.trim();
+  const inputLower = input.toLowerCase();
+
+  // Tier 1: If it looks like a ticker (all caps, 1-5 chars), try directly
+  if (/^[A-Z]{1,5}(\.[A-Z]{1,2})?$/.test(input)) {
+    try {
+      const summary: any = await yahooFinance.quoteSummary(input, {
+        modules: ["price"] as any,
+      });
+      if (summary?.price?.symbol) {
+        return {
+          ticker: summary.price.symbol,
+          name: summary.price.longName ?? summary.price.shortName ?? input,
+        };
+      }
+    } catch { /* fall through */ }
+  }
+
+  // Tier 2: Search Yahoo Finance quotes
   try {
-    const results: any = await yahooFinance.search(companyName, {
-      quotesCount: 5,
+    const results: any = await yahooFinance.search(input, {
+      quotesCount: 8,
       newsCount: 0,
     });
-    const equity = (results.quotes ?? []).find(
-      (q: any) => q.quoteType === "EQUITY"
+    const quotes: any[] = results?.quotes ?? [];
+
+    // Accept EQUITY or MUTUALFUND types
+    const equity = quotes.find(
+      (q: any) =>
+        q.quoteType === "EQUITY" ||
+        q.typeDisp === "Equity" ||
+        (q.symbol && q.shortname)
     );
+
     if (equity?.symbol) {
-      return { ticker: equity.symbol as string, name: (equity.shortname ?? companyName) as string };
+      return {
+        ticker: equity.symbol as string,
+        name: (equity.longname ?? equity.shortname ?? input) as string,
+      };
     }
-    return null;
-  } catch {
-    return null;
+  } catch { /* fall through */ }
+
+  // Tier 3: Well-known company name map
+  const mapped = KNOWN_TICKERS[inputLower];
+  if (mapped) {
+    return { ticker: mapped, name: input };
   }
+
+  // Tier 4: Try partial match in known tickers
+  const partialKey = Object.keys(KNOWN_TICKERS).find((k) =>
+    k.includes(inputLower) || inputLower.includes(k)
+  );
+  if (partialKey) {
+    return { ticker: KNOWN_TICKERS[partialKey], name: input };
+  }
+
+  return null;
 }
+
 
 // ── Fetch company profile ─────────────────────────────────────────────────────
 export async function fetchCompanyProfile(

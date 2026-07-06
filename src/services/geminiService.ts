@@ -5,7 +5,7 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
-const MODEL = "gemini-1.5-flash";
+const MODEL = "gemini-2.5-flash";
 
 export function createGeminiModel(temperature = 0.3) {
   const apiKey = process.env.GEMINI_API_KEY;
