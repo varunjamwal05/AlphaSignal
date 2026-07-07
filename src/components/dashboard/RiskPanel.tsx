@@ -1,6 +1,6 @@
 "use client";
 import type { RiskAssessment, GrowthOpportunities } from "@/types/agent";
-import { AlertTriangle, TrendingUp, Shield } from "lucide-react";
+import { TrendingUp, Shield } from "lucide-react";
 
 const severityColor = (s: string) =>
   s === "HIGH" ? "#ef4444" : s === "MEDIUM" ? "#f59e0b" : "#10b981";

@@ -3,7 +3,7 @@ import type { FinalReport } from "@/types/agent";
 import { Download, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
-export function ReportPanel({ report, historyId }: { report?: FinalReport; historyId?: string | null }) {
+export function ReportPanel({ report, historyId: _historyId }: { report?: FinalReport; historyId?: string | null }) {
   const [showMarkdown, setShowMarkdown] = useState(false);
 
   if (!report) return null;
