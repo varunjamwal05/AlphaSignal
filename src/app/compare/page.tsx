@@ -40,37 +40,22 @@ export default function ComparePage() {
   };
 
   // Prepare radar chart data
+  // reportData in DB is the FinalReport object; scores are stored separately via the API route
+  // We'll derive scores from the stored score field and use reportData for narrative fields
+  const getScore = (r: any) => ({
+    financial: r.reportData?.financialHealthScore ?? r.reportData?.scores?.financialHealthScore ?? 0,
+    growth:    r.reportData?.growthScore ?? r.reportData?.scores?.growthScore ?? 0,
+    risk:      r.reportData?.riskScore ?? r.reportData?.scores?.riskScore ?? 0,
+    sentiment: r.reportData?.sentimentScore ?? r.reportData?.scores?.sentimentScore ?? 0,
+    valuation: r.reportData?.valuationScore ?? r.reportData?.scores?.valuationScore ?? 0,
+  });
+
   const radarData = results ? [
-    {
-      subject: "Financial",
-      A: results.r1.reportData?.scores?.financialHealthScore ?? 0,
-      B: results.r2.reportData?.scores?.financialHealthScore ?? 0,
-      fullMark: 100,
-    },
-    {
-      subject: "Growth",
-      A: results.r1.reportData?.scores?.growthScore ?? 0,
-      B: results.r2.reportData?.scores?.growthScore ?? 0,
-      fullMark: 100,
-    },
-    {
-      subject: "Risk",
-      A: results.r1.reportData?.scores?.riskScore ?? 0,
-      B: results.r2.reportData?.scores?.riskScore ?? 0,
-      fullMark: 100,
-    },
-    {
-      subject: "Sentiment",
-      A: results.r1.reportData?.scores?.sentimentScore ?? 0,
-      B: results.r2.reportData?.scores?.sentimentScore ?? 0,
-      fullMark: 100,
-    },
-    {
-      subject: "Valuation",
-      A: results.r1.reportData?.scores?.valuationScore ?? 0,
-      B: results.r2.reportData?.scores?.valuationScore ?? 0,
-      fullMark: 100,
-    },
+    { subject: "Financial", A: getScore(results.r1).financial, B: getScore(results.r2).financial, fullMark: 100 },
+    { subject: "Growth",    A: getScore(results.r1).growth,   B: getScore(results.r2).growth,   fullMark: 100 },
+    { subject: "Risk",      A: getScore(results.r1).risk,     B: getScore(results.r2).risk,     fullMark: 100 },
+    { subject: "Sentiment", A: getScore(results.r1).sentiment,B: getScore(results.r2).sentiment,fullMark: 100 },
+    { subject: "Valuation", A: getScore(results.r1).valuation,B: getScore(results.r2).valuation,fullMark: 100 },
   ] : [];
 
   return (
@@ -220,11 +205,11 @@ export default function ComparePage() {
               
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 {[
-                  { label: "Market Cap", fn: (r: any) => formatValue(r.reportData?.profile?.marketCap, 'currency') },
-                  { label: "Latest Revenue", fn: (r: any) => formatValue(r.reportData?.financials?.metrics?.[0]?.revenue, 'currency') },
-                  { label: "P/E Ratio", fn: (r: any) => formatValue(r.reportData?.valuation?.peRatio, 'number') },
-                  { label: "PEG Ratio", fn: (r: any) => formatValue(r.reportData?.valuation?.pegRatio, 'number') },
-                  { label: "News Sentiment", fn: (r: any) => r.reportData?.scores?.sentimentScore ? `${r.reportData.scores.sentimentScore.toFixed(0)}/100` : "N/A" },
+                  { label: "Investment Score", fn: (r: any) => r.score != null ? `${Number(r.score).toFixed(0)} / 100` : "N/A" },
+                  { label: "Confidence",        fn: (r: any) => r.confidence != null ? `${Number(r.confidence).toFixed(0)}%` : "N/A" },
+                  { label: "Recommendation",    fn: (r: any) => r.recommendation ?? "N/A" },
+                  { label: "Strengths",          fn: (r: any) => Array.isArray(r.reportData?.strengths) ? `${r.reportData.strengths.length} identified` : "N/A" },
+                  { label: "Key Risks",          fn: (r: any) => Array.isArray(r.reportData?.keyRisks) ? `${r.reportData.keyRisks.length} identified` : "N/A" },
                 ].map((row, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "12px", borderBottom: "1px solid var(--bg-border)" }}>
                     <div style={{ width: "30%", fontSize: "13px", color: "var(--text-secondary)" }}>{row.label}</div>
@@ -244,8 +229,28 @@ export default function ComparePage() {
                   {r.ticker} Investment Thesis
                 </h3>
                 <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-primary)", whiteSpace: "pre-wrap" }}>
-                  {r.summary || r.reportData?.report?.investmentThesis || "No thesis available."}
+                  {r.reportData?.investmentThesis || r.summary || "No thesis available."}
                 </p>
+                {Array.isArray(r.reportData?.strengths) && r.reportData.strengths.length > 0 && (
+                  <div style={{ marginTop: "16px" }}>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Strengths</div>
+                    <ul style={{ margin: 0, paddingLeft: "16px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      {r.reportData.strengths.slice(0, 4).map((s: string, si: number) => (
+                        <li key={si} style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.5 }}>{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(r.reportData?.keyRisks) && r.reportData.keyRisks.length > 0 && (
+                  <div style={{ marginTop: "12px" }}>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--accent-amber)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Key Risks</div>
+                    <ul style={{ margin: 0, paddingLeft: "16px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      {r.reportData.keyRisks.slice(0, 3).map((risk: string, ri: number) => (
+                        <li key={ri} style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>{risk}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             ))}
           </div>

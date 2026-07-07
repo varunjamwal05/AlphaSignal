@@ -107,14 +107,35 @@ export async function POST(req: NextRequest) {
               score: report.investmentScore ?? 50,
               confidence: report.confidence ?? 50,
               summary: report.investmentThesis?.substring(0, 500) ?? "",
-              reportData: state.report as object,
+              // Merge scores into reportData so the Compare page radar chart has real data
+              reportData: { ...(state.report as object), scores: state.scores ?? {} } as object,
               citations: (state.citations ?? []) as object,
             },
           });
-          send("complete", { historyId: history.id, report: state.report });
+          send("complete", { 
+            historyId: history.id, 
+            report: state.report,
+            financials: state.financials,
+            valuation: state.valuation,
+            news: state.news,
+            sentiment: state.sentiment,
+            risks: state.risks,
+            opportunities: state.opportunities,
+            citations: state.citations,
+          });
         } catch (dbErr) {
           console.error("[Research API] DB save failed:", dbErr);
-          send("complete", { historyId: null, report: state.report });
+          send("complete", { 
+            historyId: null, 
+            report: state.report,
+            financials: state.financials,
+            valuation: state.valuation,
+            news: state.news,
+            sentiment: state.sentiment,
+            risks: state.risks,
+            opportunities: state.opportunities,
+            citations: state.citations,
+          });
         }
       } else {
         send("error", { message: state.error ?? "Research completed but no report was generated." });

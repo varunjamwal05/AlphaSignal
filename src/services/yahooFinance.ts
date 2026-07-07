@@ -160,6 +160,43 @@ export async function resolveTickerFromName(
     return { ticker: KNOWN_TICKERS[partialKey], name: input };
   }
 
+  // Tier 5: LLM-based spelling correction — handles typos like "mircosoft" → "Microsoft"
+  try {
+    const { ChatGoogleGenerativeAI } = await import("@langchain/google-genai");
+    const llm = new ChatGoogleGenerativeAI({
+      model: "gemini-2.0-flash",
+      apiKey: process.env.GEMINI_API_KEY,
+      temperature: 0,
+    });
+    const response = await llm.invoke(
+      `You are a company name resolver. The user typed: "${input}"
+This might be a typo or misspelling of a well-known publicly listed company.
+If you can identify the most likely intended company, respond with ONLY the correct company name (e.g. "Microsoft") or its ticker (e.g. "MSFT").
+If you cannot identify any company, respond with exactly: UNKNOWN`
+    );
+    const corrected = String(response.content).trim();
+    if (corrected && corrected !== "UNKNOWN" && corrected.toLowerCase() !== inputLower) {
+      // Retry resolution with corrected name (avoid infinite loop by not calling Tier 5 again)
+      const correctedLower = corrected.toLowerCase();
+      // Check known tickers first
+      const knownMatch = KNOWN_TICKERS[correctedLower];
+      if (knownMatch) return { ticker: knownMatch, name: corrected };
+      // Try Yahoo search with corrected name
+      try {
+        const results: any = await yahooFinance.search(corrected, {
+          quotesCount: 5,
+          newsCount: 0,
+        });
+        const equity = (results?.quotes ?? []).find(
+          (q: any) => q.quoteType === "EQUITY" || q.typeDisp === "Equity" || (q.symbol && q.shortname)
+        );
+        if (equity?.symbol) {
+          return { ticker: equity.symbol as string, name: (equity.longname ?? equity.shortname ?? corrected) as string };
+        }
+      } catch { /* ignore */ }
+    }
+  } catch { /* LLM unavailable */ }
+
   return null;
 }
 

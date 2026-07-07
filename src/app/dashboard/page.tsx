@@ -122,6 +122,13 @@ export default function DashboardPage() {
           status: "complete",
           historyId: data.historyId as string,
           report: data.report as unknown as FinalReport,
+          financials: data.financials as unknown as FinancialData,
+          valuation: data.valuation as unknown as Valuation,
+          news: data.news as unknown as NewsArticle[],
+          sentiment: data.sentiment as unknown as SentimentAnalysis,
+          risks: data.risks as unknown as RiskAssessment,
+          opportunities: data.opportunities as unknown as GrowthOpportunities,
+          citations: data.citations as unknown as Citation[],
         }));
         break;
       case "error":
@@ -201,11 +208,11 @@ export default function DashboardPage() {
 
             {state.report && (
               <>
-                <MetricCards financials={state.report as unknown as FinancialData} valuation={undefined} />
-                <ChartsPanel financials={state.report as unknown as FinancialData} scores={state.scores} sentiment={undefined} />
-                <NewsPanel news={[]} sentiment={undefined} />
-                <RiskPanel risks={undefined} opportunities={undefined} />
-                <CitationsPanel citations={state.report ? [] : []} />
+                <MetricCards financials={state.financials} valuation={state.valuation} />
+                <ChartsPanel financials={state.financials} scores={state.scores} sentiment={state.sentiment} />
+                <NewsPanel news={state.news ?? []} sentiment={state.sentiment} />
+                <RiskPanel risks={state.risks} opportunities={state.opportunities} />
+                <CitationsPanel citations={state.citations ?? []} />
                 <ReportPanel report={state.report} historyId={state.historyId} />
               </>
             )}
