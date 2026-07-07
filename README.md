@@ -1,12 +1,12 @@
-# AlphaSignal — AI Investment Research Agent
+# AlphaSignal — AI Investment Research Terminal
 
-> Production-grade AI-powered investment research platform built with Next.js 15, LangGraph.js, Google Gemini, PostgreSQL, and Recharts.
+> Production-grade AI-powered investment research platform built with Next.js 15, LangGraph.js, Google Gemini, PostgreSQL (Supabase), and Recharts. Styled as a full trading terminal experience.
 
 ---
 
 ## Overview
 
-AlphaSignal is an autonomous investment research agent that researches any publicly listed company and delivers a transparent, evidence-backed investment recommendation (INVEST / WATCH / PASS). It is designed to look and feel like a professional financial SaaS terminal, inspired by Bloomberg Terminal, Linear, and Perplexity AI.
+AlphaSignal is an autonomous investment research agent that researches any publicly listed company and delivers a transparent, evidence-backed investment recommendation (**INVEST / WATCH / PASS**). The UI is designed to feel like a professional trading terminal — inspired by Bloomberg Terminal and TradingView — with live-animated stock cards, scrolling ticker tapes, candlestick chart backgrounds, and monospace data displays.
 
 **This is not a chatbot.** It is a multi-step LangGraph AI agent that autonomously:
 1. Plans the research strategy
@@ -19,16 +19,22 @@ AlphaSignal is an autonomous investment research agent that researches any publi
 
 ---
 
+## Screenshots
+
+> Landing page — animated stock cards, candlestick chart background, terminal-style search bar
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Framework | Next.js 15 (App Router, React 19) |
 | Language | TypeScript (Strict) |
-| Styling | Tailwind CSS + Custom CSS Design System |
+| Styling | Custom CSS Design System (Space Grotesk + JetBrains Mono) |
 | AI Orchestration | LangGraph.js + LangChain.js |
-| LLM | Google Gemini 1.5 Flash |
-| Database | PostgreSQL + Prisma ORM 6 |
+| LLM | Google Gemini 2.0 Flash |
+| Database | PostgreSQL (Supabase) + Prisma ORM 6 |
 | Data Fetching | Yahoo Finance via `yahoo-finance2` |
 | State Management | TanStack React Query v5 |
 | Charts | Recharts |
@@ -46,7 +52,7 @@ AlphaSignal is an autonomous investment research agent that researches any publi
 │  ┌──────────────┐ ┌──────────────┐ ┌─────────────────┐ │
 │  │ Landing Page │ │  Dashboard   │ │ History/Compare │ │
 │  └──────────────┘ └──────────────┘ └─────────────────┘ │
-└─────────────────────┬──────────────────────────────────-┘
+└─────────────────────┬───────────────────────────────────┘
                       │  SSE Stream (POST /api/research)
 ┌─────────────────────▼───────────────────────────────────┐
 │  LangGraph Agent Engine (src/agents/graph.ts)           │
@@ -67,7 +73,7 @@ AlphaSignal is an autonomous investment research agent that researches any publi
 ┌─────────────────────▼───────────────────────────────────┐
 │  Data Services                                          │
 │  Yahoo Finance (Real Data) | Google Gemini (Analysis)   │
-│  Prisma ORM (PostgreSQL Cache + History)                │
+│  Prisma ORM (Supabase PostgreSQL — History + Cache)     │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -78,28 +84,30 @@ AlphaSignal is an autonomous investment research agent that researches any publi
 ```
 src/
 ├── app/
-│   ├── page.tsx              # Landing page
-│   ├── dashboard/page.tsx    # Main research dashboard
-│   ├── history/page.tsx      # Research history
-│   ├── compare/page.tsx      # Company comparison
+│   ├── page.tsx                  # Trading terminal landing page
+│   ├── globals.css               # Design system (trading terminal theme)
+│   ├── layout.tsx                # Root layout + font loading
+│   ├── dashboard/page.tsx        # Main research dashboard (SSE streaming)
+│   ├── history/page.tsx          # Research history (Supabase backed)
+│   ├── compare/page.tsx          # Side-by-side company comparison + radar chart
 │   └── api/
-│       ├── research/route.ts # SSE streaming agent API
-│       ├── history/route.ts  # History records
-│       └── report/[id]/route.ts
+│       ├── research/route.ts     # SSE streaming agent API
+│       ├── history/route.ts      # History records
+│       └── compare/route.ts      # Comparison endpoint
 ├── agents/
-│   ├── graph.ts              # LangGraph workflow
-│   ├── state.ts              # Shared agent state (Annotation)
-│   ├── nodes/                # Planner, research, analysis, reflection nodes
-│   └── tools/                # LangChain tools (7 tools)
+│   ├── graph.ts                  # LangGraph workflow definition
+│   ├── state.ts                  # Shared agent state (Annotation)
+│   ├── nodes/                    # 8 agent nodes
+│   └── tools/                    # 7 LangChain tools
 ├── components/
-│   ├── layout/               # Navbar, Providers
-│   └── dashboard/            # AgentTimeline, RecommendationCard, MetricCards,
-│                             # ChartsPanel, NewsPanel, RiskPanel, ReportPanel, CitationsPanel
+│   ├── layout/                   # Navbar (ticker tape), Providers
+│   └── dashboard/                # AgentTimeline, RecommendationCard, MetricCards,
+│                                 # ChartsPanel, NewsPanel, RiskPanel, ReportPanel
 ├── services/
-│   ├── yahooFinance.ts       # Real financial data (no mock data)
-│   └── geminiService.ts      # Gemini LLM integration
+│   ├── yahooFinance.ts           # 5-tier company resolver + real financial data
+│   └── geminiService.ts          # Gemini LLM integration
 └── types/
-    └── agent.ts              # Zod schemas + TypeScript interfaces
+    └── agent.ts                  # Zod schemas + TypeScript interfaces
 ```
 
 ---
@@ -111,13 +119,13 @@ START
   ↓
 Planner Node           — sets research strategy & tool list
   ↓
-Company Research       — resolves ticker via Yahoo Finance, fetches profile
+Company Research       — 5-tier ticker resolver (ticker → Yahoo search → known map → partial → LLM spell-fix)
   ↓
-Financial Analysis     — retrieves income statements, balance sheet, cash flow
-  ↓ (parallel with ↑ via Promise.all)
+Financial Analysis     — income statements, balance sheet, cash flow
+  ↓
 Valuation              — P/E, PEG, EV/EBITDA, Price/Sales, current price
   ↓
-News Analysis          — fetches 12 recent articles via Yahoo Finance
+News Analysis          — fetches recent articles via Yahoo Finance
   ↓
 News Sentiment         — Gemini classifies each article (POSITIVE/NEGATIVE/NEUTRAL)
   ↓
@@ -147,9 +155,9 @@ END
 | Valuation | 10% | PE ratio, PEG ratio, EV/EBITDA vs industry benchmarks |
 
 **Recommendation Thresholds:**
-- Score ≥ 65 → **INVEST**
-- Score 45–64 → **WATCH**
-- Score < 45 → **PASS**
+- Score ≥ 65 → **INVEST** 🟢
+- Score 45–64 → **WATCH** 🟡
+- Score < 45 → **PASS** 🔴
 
 ---
 
@@ -157,13 +165,14 @@ END
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL (or Docker)
-- Google Gemini API key
+- PostgreSQL database — **Supabase free tier recommended** (no Docker needed)
+- Google Gemini API key ([Get one free](https://aistudio.google.com/app/apikey))
 
 ### 1. Clone & Install
 
 ```bash
-cd "InsideIIM Project"
+git clone https://github.com/varunjamwal05/AlphaSignal.git
+cd AlphaSignal
 npm install
 ```
 
@@ -175,25 +184,25 @@ cp .env.example .env
 
 Edit `.env`:
 ```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/investment_research"
+# Supabase connection (session pooler — port 5432)
+# IMPORTANT: URL-encode special characters in your password
+# e.g. @ → %40, / → %2F
+DATABASE_URL="postgresql://postgres.xxxx:YOUR_PASSWORD@aws-0-region.pooler.supabase.com:5432/postgres"
+DIRECT_URL="postgresql://postgres.xxxx:YOUR_PASSWORD@aws-0-region.pooler.supabase.com:5432/postgres"
+
 GEMINI_API_KEY="your-gemini-api-key-here"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-### 3. Start PostgreSQL (Docker)
+> **Note on Supabase passwords with special characters:** If your Supabase password contains `@`, `/`, `#` etc., URL-encode them before pasting into `DATABASE_URL`. Example: `-@abc/xyz` → `-%40abc%2Fxyz`
 
-```bash
-docker-compose up -d
-```
-
-Or use [Supabase](https://supabase.com) and paste your connection string.
-
-### 4. Initialize Database
+### 3. Initialize Database
 
 ```bash
 npx prisma db push
 ```
 
-### 5. Run Dev Server
+### 4. Run Dev Server
 
 ```bash
 npm run dev
@@ -207,19 +216,20 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
+| `DATABASE_URL` | ✅ | PostgreSQL connection string (use session pooler port 5432 for Supabase) |
+| `DIRECT_URL` | ✅ | Direct connection for Prisma migrations (same as DATABASE_URL for Supabase session pooler) |
 | `GEMINI_API_KEY` | ✅ | Google AI Studio API key |
 | `NEXT_PUBLIC_APP_URL` | ❌ | App URL for production |
 
 ---
 
-## API Documentation
+## API Reference
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/research` | POST | Start research (SSE stream). Body: `{ company: string }` |
 | `/api/history` | GET | Get 50 most recent research reports |
-| `/api/report/:id` | GET | Get full report by ID with execution logs |
+| `/api/compare` | GET | Compare two companies. Query: `?c1=AAPL&c2=MSFT` |
 
 ### SSE Events (POST /api/research)
 
@@ -229,38 +239,63 @@ Open [http://localhost:3000](http://localhost:3000)
 | `node_complete` | `{ node, status, summary, elapsedMs }` |
 | `scores_update` | `WeightedScores` object |
 | `recommendation_update` | `{ recommendation, confidence }` |
-| `complete` | `{ historyId, report }` |
+| `complete` | `{ historyId, report, financials, valuation, news, sentiment, risks, opportunities, citations }` |
 | `error` | `{ message }` |
+
+---
+
+## UI — Trading Terminal Design System
+
+The UI uses a custom trading terminal design system (no component library):
+
+| Token | Value | Usage |
+|---|---|---|
+| `--bg-primary` | `#03040a` | Page background |
+| `--accent-cyan` | `#38bdf8` | Primary brand, borders, active states |
+| `--accent-green` | `#00c97a` | BUY / positive / INVEST |
+| `--accent-red` | `#f04f63` | SELL / negative / PASS |
+| `--accent-amber` | `#f5a623` | WATCH / caution |
+| `--font-sans` | Space Grotesk | Headings, body text |
+| `--font-mono` | JetBrains Mono | Numbers, tickers, inputs, buttons |
+
+**Key UI features:**
+- Scrolling stock ticker tape in Navbar (AAPL, MSFT, NVDA…)
+- Animated live price cards on landing page
+- SVG candlestick chart background
+- Subtle grid overlay across all pages
+- Monospace inputs styled as order-entry terminals
+- Neon glow badges for INVEST / WATCH / PASS signals
 
 ---
 
 ## Deployment (Vercel)
 
 1. Push to GitHub
-2. Import project to Vercel
-3. Set environment variables (`DATABASE_URL`, `GEMINI_API_KEY`)
+2. Import project at [vercel.com](https://vercel.com)
+3. Set environment variables: `DATABASE_URL`, `DIRECT_URL`, `GEMINI_API_KEY`
 4. Deploy — Vercel handles Next.js 15 automatically
-5. Run `npx prisma db push` against your production database
+5. Run `npx prisma db push` against your production database URL
 
 ---
 
 ## Trade-offs & Design Decisions
 
-- **yahoo-finance2 without an API key**: Uses public endpoints — may hit rate limits under heavy traffic. For production scale, use a paid financial data API (Alpha Vantage, Financial Modeling Prep).
-- **No mock data policy**: When financial data is unavailable, the app clearly marks fields as "N/A" rather than fabricating values. Transparency over completeness.
-- **SSE over WebSocket**: Simpler to deploy on Vercel serverless without a persistent connection manager.
-- **Prisma v6 on Prisma 7 CLI**: npm resolves to Prisma 6 for stable `schema.prisma` URL handling compatible with Next.js 15.
-- **Gemini 1.5 Flash**: Chosen for speed and cost efficiency for multi-step analysis. Gemini 2.5 Flash is a drop-in upgrade.
+- **5-tier company resolver:** Direct ticker → Yahoo search → Known map → Partial match → **LLM spell correction** (handles typos like "mircosoft" → "Microsoft")
+- **yahoo-finance2 without a paid API key:** Uses public endpoints — may hit rate limits under heavy traffic. For production scale, use Alpha Vantage or Financial Modeling Prep.
+- **No mock data policy:** When financial data is unavailable, fields display as "N/A" — never fabricated. Transparency over completeness.
+- **SSE over WebSocket:** Simpler to deploy on Vercel serverless without a persistent connection manager.
+- **Supabase session pooler (port 5432):** More reliable than transaction pooler (port 6543) for Prisma's connection model.
+- **Gemini 2.0 Flash:** Chosen for speed and cost efficiency across multi-step analysis.
 
 ---
 
 ## Future Improvements
 
-- [ ] Full company comparison with side-by-side Recharts
-- [ ] Alpha Vantage / FMP paid API integration for richer fundamentals
+- [ ] Alpha Vantage / FMP paid API for richer fundamentals
 - [ ] User authentication (NextAuth.js) for personal watchlists
+- [ ] Real-time price data integration (WebSocket)
 - [ ] Email report delivery
-- [ ] Websocket real-time multi-user collaboration
 - [ ] SEC filing direct parser (EDGAR XBRL)
-- [ ] Custom LLM model selection (OpenAI GPT-4o, Claude)
 - [ ] Portfolio-level analysis across multiple stocks
+- [ ] Custom LLM model selection (OpenAI GPT-4o, Claude)
+- [ ] Mobile-responsive trading dashboard
