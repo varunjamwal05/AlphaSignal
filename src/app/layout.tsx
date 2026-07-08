@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   title: "HiddenEdge – AI Investment Research Agent",
   description: "Production-grade AI agent that researches publicly listed companies using LangGraph, real financial data, and Gemini to deliver transparent investment recommendations.",
   keywords: ["AI investing", "investment research", "LangGraph", "financial analysis", "stock analysis"],
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
   openGraph: {
     title: "HiddenEdge – AI Investment Research Agent",
     description: "AI-powered investment research for every stock. Real data. Transparent reasoning.",
