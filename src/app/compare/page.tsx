@@ -223,36 +223,70 @@ export default function ComparePage() {
 
           {/* Thesis Comparison */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-            {[results.r1, results.r2].map((r, i) => (
-              <div key={i} className="terminal-card" style={{ padding: "24px" }}>
-                <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "16px" }}>
-                  {r.ticker} Investment Thesis
-                </h3>
-                <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-primary)", whiteSpace: "pre-wrap" }}>
-                  {r.reportData?.investmentThesis || r.summary || "No thesis available."}
-                </p>
-                {Array.isArray(r.reportData?.strengths) && r.reportData.strengths.length > 0 && (
-                  <div style={{ marginTop: "16px" }}>
-                    <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Strengths</div>
-                    <ul style={{ margin: 0, paddingLeft: "16px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                      {r.reportData.strengths.slice(0, 4).map((s: string, si: number) => (
-                        <li key={si} style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.5 }}>{s}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {Array.isArray(r.reportData?.keyRisks) && r.reportData.keyRisks.length > 0 && (
-                  <div style={{ marginTop: "12px" }}>
-                    <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--accent-amber)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Key Risks</div>
-                    <ul style={{ margin: 0, paddingLeft: "16px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                      {r.reportData.keyRisks.slice(0, 3).map((risk: string, ri: number) => (
-                        <li key={ri} style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>{risk}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
+            {[results.r1, results.r2].map((r, i) => {
+              const thesis: string = r.reportData?.investmentThesis || r.summary || "";
+              const hasError = thesis.toLowerCase().includes("encountered an error") || thesis.toLowerCase().includes("generation failed");
+              return (
+                <div key={i} className="terminal-card" style={{ padding: "24px" }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "16px" }}>
+                    {r.ticker} Investment Thesis
+                  </h3>
+
+                  {hasError ? (
+                    <div style={{
+                      padding: "16px 20px", borderRadius: "10px",
+                      background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)",
+                      display: "flex", flexDirection: "column", gap: "10px"
+                    }}>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--accent-amber)" }}>
+                        ⚠ Report generation failed for {r.ticker}
+                      </div>
+                      <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
+                        The AI report generator hit an error (likely a rate limit) when this analysis was last run.
+                        The scores and metrics are still valid — only the written thesis is missing.
+                      </p>
+                      <a
+                        href={`/?q=${encodeURIComponent(r.ticker)}`}
+                        style={{
+                          display: "inline-block", padding: "8px 16px",
+                          borderRadius: "8px", fontSize: "13px", fontWeight: 600,
+                          background: "rgba(245,158,11,0.15)", color: "var(--accent-amber)",
+                          border: "1px solid rgba(245,158,11,0.3)", textDecoration: "none",
+                          width: "fit-content", cursor: "pointer"
+                        }}
+                      >
+                        Re-analyze {r.ticker} on Dashboard →
+                      </a>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-primary)", whiteSpace: "pre-wrap" }}>
+                      {thesis || "No thesis available."}
+                    </p>
+                  )}
+
+                  {!hasError && Array.isArray(r.reportData?.strengths) && r.reportData.strengths.length > 0 && (
+                    <div style={{ marginTop: "16px" }}>
+                      <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Strengths</div>
+                      <ul style={{ margin: 0, paddingLeft: "16px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                        {r.reportData.strengths.slice(0, 4).map((s: string, si: number) => (
+                          <li key={si} style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.5 }}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {!hasError && Array.isArray(r.reportData?.keyRisks) && r.reportData.keyRisks.length > 0 && (
+                    <div style={{ marginTop: "12px" }}>
+                      <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--accent-amber)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Key Risks</div>
+                      <ul style={{ margin: 0, paddingLeft: "16px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                        {r.reportData.keyRisks.slice(0, 3).map((risk: string, ri: number) => (
+                          <li key={ri} style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.5 }}>{risk}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
         </div>
