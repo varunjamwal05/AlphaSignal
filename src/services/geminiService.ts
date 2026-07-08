@@ -47,7 +47,7 @@ export async function analyzeWithGemini(
         new HumanMessage(userMessage),
       ]);
       return response.content as string;
-    } catch (err: any) {
+    } catch (err: unknown) {
       attempts++;
       const errStr = String(err);
       
