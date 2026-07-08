@@ -1,4 +1,4 @@
-# AlphaSignal — AI Investment Research Terminal
+# HiddenEdge — AI Investment Research Terminal
 
 > Production-grade AI-powered investment research platform built with Next.js 15, LangGraph.js, Google Gemini, PostgreSQL (Supabase), and Recharts. Styled as a full trading terminal experience.
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-AlphaSignal is an autonomous investment research agent that researches any publicly listed company and delivers a transparent, evidence-backed investment recommendation (**INVEST / WATCH / PASS**). The UI is designed to feel like a professional trading terminal — inspired by Bloomberg Terminal and TradingView — with live-animated stock cards, scrolling ticker tapes, candlestick chart backgrounds, and monospace data displays.
+HiddenEdge is an autonomous investment research agent that researches any publicly listed company and delivers a transparent, evidence-backed investment recommendation (**INVEST / WATCH / PASS**). The UI is designed to feel like a professional trading terminal — inspired by Bloomberg Terminal and TradingView — with live-animated stock cards, scrolling ticker tapes, candlestick chart backgrounds, and monospace data displays.
 
 **This is not a chatbot.** It is a multi-step LangGraph AI agent that autonomously:
 1. Plans the research strategy
@@ -172,7 +172,7 @@ END
 
 ```bash
 git clone https://github.com/varunjamwal05/AlphaSignal.git
-cd AlphaSignal
+cd HiddenEdge
 npm install
 ```
 

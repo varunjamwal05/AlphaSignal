@@ -88,7 +88,7 @@ export function Navbar() {
             <TrendingUp size={16} color="#000" strokeWidth={2.5} />
           </div>
           <span style={{ fontWeight: 700, fontSize: "16px", letterSpacing: "-0.3px", fontFamily: "var(--font-mono)" }}>
-            Alpha<span className="gradient-text">Signal</span>
+            Hidden<span className="gradient-text">Edge</span>
           </span>
         </Link>
 

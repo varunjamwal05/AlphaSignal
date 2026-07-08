@@ -396,7 +396,7 @@ export default function Home() {
         textAlign: "center",
       }}>
         <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)", letterSpacing: "0.5px" }}>
-          ALPHASIGNAL RESEARCH TERMINAL · LANGGRAPH + NEXT.JS 15 · FOR EDUCATIONAL USE ONLY
+          HIDDENEDGE RESEARCH TERMINAL · LANGGRAPH + NEXT.JS 15 · FOR EDUCATIONAL USE ONLY
         </span>
       </footer>
 
