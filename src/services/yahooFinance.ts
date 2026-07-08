@@ -162,12 +162,23 @@ export async function resolveTickerFromName(
 
   // Tier 5: LLM-based spelling correction — handles typos like "mircosoft" → "Microsoft"
   try {
-    const { ChatGoogleGenerativeAI } = await import("@langchain/google-genai");
-    const llm = new ChatGoogleGenerativeAI({
-      model: "gemini-2.0-flash",
-      apiKey: process.env.GEMINI_API_KEY,
-      temperature: 0,
-    });
+    const openAIKey = process.env.OPENAI_API_KEY;
+    let llm;
+    if (openAIKey) {
+      const { ChatOpenAI } = await import("@langchain/openai");
+      llm = new ChatOpenAI({
+        model: "gpt-4o-mini",
+        apiKey: openAIKey,
+        temperature: 0,
+      });
+    } else {
+      const { ChatGoogleGenerativeAI } = await import("@langchain/google-genai");
+      llm = new ChatGoogleGenerativeAI({
+        model: "gemini-2.0-flash",
+        apiKey: process.env.GEMINI_API_KEY,
+        temperature: 0,
+      });
+    }
     const response = await llm.invoke(
       `You are a company name resolver. The user typed: "${input}"
 This might be a typo or misspelling of a well-known publicly listed company.
@@ -246,69 +257,93 @@ export async function fetchFinancials(
   const availabilityNotes: string[] = [];
 
   try {
-    const [income, cashflow] = await Promise.allSettled([
-      yahooFinance.quoteSummary(ticker, {
-        modules: ["incomeStatementHistory"] as any,
-      }),
-      yahooFinance.quoteSummary(ticker, {
-        modules: ["cashflowStatementHistory", "balanceSheetHistory"] as any,
-      }),
+    const results = await Promise.allSettled([
+      yahooFinance.fundamentalsTimeSeries(ticker, { period1: '2020-01-01', type: 'annual', module: 'financials' }),
+      yahooFinance.fundamentalsTimeSeries(ticker, { period1: '2020-01-01', type: 'annual', module: 'balance-sheet' }),
+      yahooFinance.fundamentalsTimeSeries(ticker, { period1: '2020-01-01', type: 'annual', module: 'cash-flow' }),
     ]);
 
-    const metrics: FinancialMetric[] = [];
+    const financials = results[0].status === 'fulfilled' ? results[0].value : [];
+    const balanceSheet = results[1].status === 'fulfilled' ? results[1].value : [];
+    const cashFlow = results[2].status === 'fulfilled' ? results[2].value : [];
 
-    if (income.status === "fulfilled") {
-      const summary: any = income.value;
-      const annual: any[] = summary.incomeStatementHistory?.incomeStatementHistory ?? [];
-      for (const stmt of annual) {
-        const m: FinancialMetric = {
-          year: new Date(stmt.endDate).getFullYear(),
-          period: "ANNUAL",
-          revenue: stmt.totalRevenue ?? undefined,
-          netIncome: stmt.netIncome ?? undefined,
-          operatingIncome: stmt.operatingIncome ?? undefined,
-          grossMargin: stmt.grossProfit && stmt.totalRevenue
-            ? (stmt.grossProfit / stmt.totalRevenue) * 100
-            : undefined,
-          ebitda: stmt.ebitda ?? undefined,
-          eps: stmt.dilutedEPS ?? undefined,
-        };
-        metrics.push(m);
+    if (results[0].status === 'rejected') availabilityNotes.push(`Income statement failed: ${results[0].reason}`);
+    if (results[1].status === 'rejected') availabilityNotes.push(`Balance sheet failed: ${results[1].reason}`);
+    if (results[2].status === 'rejected') availabilityNotes.push(`Cash flow failed: ${results[2].reason}`);
+
+    const mergedByYear: Record<number, Partial<FinancialMetric>> = {};
+
+    // 1. Process financials (Income Statement)
+    if (Array.isArray(financials)) {
+      for (const stmt of financials) {
+        if (!stmt.date) continue;
+        const year = new Date(stmt.date).getFullYear();
+        if (!mergedByYear[year]) {
+          mergedByYear[year] = { year, period: "ANNUAL" };
+        }
+        const m = mergedByYear[year];
+        m.revenue = stmt.totalRevenue ?? undefined;
+        m.netIncome = stmt.netIncome ?? undefined;
+        m.operatingIncome = stmt.operatingIncome ?? undefined;
+        m.operatingMargin = stmt.operatingIncome && stmt.totalRevenue 
+          ? (stmt.operatingIncome / stmt.totalRevenue) * 100 
+          : undefined;
+        m.grossMargin = stmt.grossProfit && stmt.totalRevenue
+          ? (stmt.grossProfit / stmt.totalRevenue) * 100
+          : undefined;
+        m.ebitda = stmt.EBITDA ?? undefined;
+        m.eps = stmt.dilutedEPS ?? stmt.basicEPS ?? undefined;
       }
-      citations.push(cite("Income Statement History"));
-    } else {
-      availabilityNotes.push("Income statement history not available");
     }
 
-    if (cashflow.status === "fulfilled") {
-      const summary: any = cashflow.value;
-      const cfStmts: any[] = summary.cashflowStatementHistory?.cashflowStatements ?? [];
-      for (const cf of cfStmts) {
-        const year = new Date(cf.endDate).getFullYear();
-        const existing = metrics.find((m) => m.year === year && m.period === "ANNUAL");
-        const fcf = cf.totalCashFromOperatingActivities != null && cf.capitalExpenditures != null
-          ? cf.totalCashFromOperatingActivities + (cf.capitalExpenditures ?? 0)
-          : undefined;
-        if (existing) existing.freeCashFlow = fcf;
-      }
-
-      const bsStmts: any[] = summary.balanceSheetHistory?.balanceSheetStatements ?? [];
-      for (const bs of bsStmts) {
-        const year = new Date(bs.endDate).getFullYear();
-        const existing = metrics.find((m) => m.year === year && m.period === "ANNUAL");
-        if (existing) {
-          existing.totalDebt = bs.longTermDebt ?? undefined;
-          existing.cashAndEquivalents = bs.cash ?? undefined;
-          existing.totalAssets = bs.totalAssets ?? undefined;
-          existing.totalEquity = bs.totalStockholderEquity ?? undefined;
-          if (bs.totalStockholderEquity && bs.longTermDebt) {
-            existing.debtToEquity = bs.longTermDebt / bs.totalStockholderEquity;
-          }
+    // 2. Process balance sheet
+    if (Array.isArray(balanceSheet)) {
+      for (const stmt of balanceSheet) {
+        if (!stmt.date) continue;
+        const year = new Date(stmt.date).getFullYear();
+        if (!mergedByYear[year]) {
+          mergedByYear[year] = { year, period: "ANNUAL" };
+        }
+        const m = mergedByYear[year];
+        m.totalDebt = stmt.totalDebt ?? stmt.longTermDebt ?? undefined;
+        m.cashAndEquivalents = stmt.cashAndCashEquivalents ?? stmt.cashCashEquivalentsAndShortTermInvestments ?? undefined;
+        m.totalAssets = stmt.totalAssets ?? undefined;
+        m.totalEquity = stmt.stockholdersEquity ?? stmt.commonStockEquity ?? undefined;
+        if (m.totalEquity && m.totalDebt) {
+          m.debtToEquity = m.totalDebt / m.totalEquity;
         }
       }
-      citations.push(cite("Cash Flow & Balance Sheet History"));
+    }
+
+    // 3. Process cash flow
+    if (Array.isArray(cashFlow)) {
+      for (const stmt of cashFlow) {
+        if (!stmt.date) continue;
+        const year = new Date(stmt.date).getFullYear();
+        if (!mergedByYear[year]) {
+          mergedByYear[year] = { year, period: "ANNUAL" };
+        }
+        const m = mergedByYear[year];
+        m.freeCashFlow = stmt.freeCashFlow ?? undefined;
+      }
+    }
+
+    // Compute derived metrics
+    for (const yearKey in mergedByYear) {
+      const m = mergedByYear[yearKey];
+      if (m.netIncome && m.totalEquity) {
+        m.returnOnEquity = (m.netIncome / m.totalEquity) * 100;
+      }
+    }
+
+    const metrics: FinancialMetric[] = Object.values(mergedByYear).filter(
+      (m): m is FinancialMetric => m.year !== undefined
+    );
+
+    if (metrics.length === 0) {
+      availabilityNotes.push("No financial statement data returned");
     } else {
-      availabilityNotes.push("Cash flow and balance sheet not available");
+      citations.push(cite("Financial Statements"));
     }
 
     const sorted = [...metrics].sort((a, b) => b.year - a.year);
@@ -320,7 +355,6 @@ export async function fetchFinancials(
     if (sorted[0]?.revenue && sorted[0]?.netIncome) {
       profitMargin = (sorted[0].netIncome / sorted[0].revenue) * 100;
     }
-    if (metrics.length === 0) availabilityNotes.push("No financial statement data returned");
 
     return { financials: { metrics, revenueGrowthYoY, profitMargin, availabilityNotes }, citations };
   } catch (err) {
@@ -347,7 +381,7 @@ export async function fetchValuation(
       peRatio: sd?.trailingPE ?? undefined,
       pegRatio: ks?.pegRatio ?? undefined,
       evToEbitda: ks?.enterpriseToEbitda ?? undefined,
-      priceToSales: ks?.priceToSalesTrailing12Months ?? undefined,
+      priceToSales: sd?.priceToSalesTrailing12Months ?? ks?.priceToSalesTrailing12Months ?? undefined,
       priceToBook: ks?.priceToBook ?? undefined,
       enterpriseValue: ks?.enterpriseValue ?? undefined,
       forwardPE: sd?.forwardPE ?? undefined,

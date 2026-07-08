@@ -13,6 +13,7 @@
     "@langchain/core": "^1.2.1",
     "@langchain/google-genai": "^2.2.0",
     "@langchain/langgraph": "^1.4.7",
+    "@langchain/openai": "^1.5.3",
     "@prisma/client": "^6.19.3",
     "@tanstack/react-query": "^5.101.2",
     "clsx": "^2.1.1",
