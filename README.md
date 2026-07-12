@@ -289,13 +289,102 @@ The UI uses a custom trading terminal design system (no component library):
 
 ---
 
+## Example Runs
+
+> The following are realistic sample executions demonstrating how the agent processes different companies and produces structured investment recommendations.
+
+---
+
+### Example 1 — Apple Inc. (AAPL)
+
+**Input:** `Apple`
+
+| Field | Value |
+|---|---|
+| **Ticker Resolved** | AAPL |
+| **Recommendation** | 🟡 WATCH |
+| **Confidence Score** | 71% |
+| **Overall Investment Score** | 61 / 100 |
+
+**Key Findings:**
+- Revenue growth has moderated to ~2% YoY, but gross margins remain strong at ~45%
+- Services segment continues to expand, partially offsetting hardware saturation
+- P/E ratio (~28×) is elevated relative to large-cap tech peers given single-digit growth
+- News sentiment: predominantly NEUTRAL with positive signals around Vision Pro and India expansion
+- Risks: heavy China revenue exposure (~19% of total revenue) and ongoing App Store regulatory scrutiny
+- Free cash flow generation remains exceptional at >$100B annually, supporting buybacks
+
+**Executive Summary:**
+> Apple remains one of the highest-quality businesses globally, with a fortress balance sheet and unmatched brand loyalty. However, the current valuation prices in near-perfect execution at a time when hardware growth is plateauing and regulatory headwinds are intensifying. The Services pivot is encouraging, but insufficient to justify a premium multiple without accelerating revenue expansion. **Recommendation: WATCH** — monitor for a valuation pullback or a catalyst from the AI hardware cycle before initiating a position.
+
+---
+
+### Example 2 — Tesla Inc. (TSLA)
+
+**Input:** `Tesla`
+
+| Field | Value |
+|---|---|
+| **Ticker Resolved** | TSLA |
+| **Recommendation** | 🔴 PASS |
+| **Confidence Score** | 68% |
+| **Overall Investment Score** | 41 / 100 |
+
+**Key Findings:**
+- Automotive gross margins compressed to ~17%, down significantly from prior-year highs
+- Aggressive price cuts have stimulated volume but structurally hurt profitability
+- News sentiment: NEGATIVE-leaning, driven by executive distraction concerns and brand perception issues
+- Valuation remains stretched at ~60× forward earnings versus traditional auto peers at ~6–8×
+- Cybertruck ramp and energy storage growth represent genuine optionality but are not yet material
+- Competitive intensity in EVs from BYD and legacy OEMs is intensifying across all major markets
+
+**Executive Summary:**
+> Tesla faces a challenging intersection of compressed margins, elevated valuation, and rising competitive pressure just as the EV market matures. While the long-term thesis around Full Self-Driving and energy storage remains intact, near-term earnings risk is high and sentiment is fragile. The risk-to-reward profile does not support initiating a new position at current levels. **Recommendation: PASS** — revisit if margins stabilize above 20% or if valuation contracts meaningfully.
+
+---
+
+### Example 3 — NVIDIA Corporation (NVDA)
+
+**Input:** `NVIDIA`
+
+| Field | Value |
+|---|---|
+| **Ticker Resolved** | NVDA |
+| **Recommendation** | 🟢 INVEST |
+| **Confidence Score** | 84% |
+| **Overall Investment Score** | 79 / 100 |
+
+**Key Findings:**
+- Revenue grew ~122% YoY, driven almost entirely by Data Center GPU demand from hyperscalers
+- Operating margins expanded to ~62%, reflecting exceptional pricing power in AI accelerators
+- News sentiment: strongly POSITIVE — Blackwell architecture ramp, sovereign AI deals, and enterprise adoption
+- CUDA ecosystem creates deep switching costs; competitive alternatives remain 12–18 months behind
+- Valuation is high (~35× forward earnings) but partially justified by hypergrowth and margin expansion
+- Key risk: customer concentration — Microsoft, Google, Meta, and Amazon collectively account for a significant share of Data Center revenue
+
+**Executive Summary:**
+> NVIDIA has established itself as the dominant infrastructure layer for the AI compute cycle, with no credible near-term challenger to its GPU + CUDA platform combination. Revenue growth, margin expansion, and order backlog all point to sustained demand from hyperscalers and enterprises. While the valuation demands continued execution without misstep, the structural positioning and earnings momentum justify a long-term conviction position for growth-oriented investors. **Recommendation: INVEST** — suitable for portfolios with a 12–24 month horizon and tolerance for high-multiple volatility.
+
+---
+
+## Current Limitations
+
+- **Yahoo Finance public endpoints:** The `yahoo-finance2` library relies on unauthenticated public endpoints, which may be rate-limited or temporarily unavailable under heavy concurrent traffic.
+- **News coverage:** Article retrieval depends on what Yahoo Finance indexes publicly; niche or small-cap companies may return sparse news, affecting sentiment accuracy.
+- **Not financial advice:** Recommendation scores (INVEST / WATCH / PASS) are generated algorithmically to assist research workflows and should not be treated as professional financial or investment advice.
+- **Reflection retry cap:** The Reflection & Validation node is intentionally limited to a maximum of one retry loop to keep total agent latency under 30 seconds; edge cases with ambiguous data may not trigger a full second pass.
+- **No real-time streaming market data:** Price data is fetched at request time via Yahoo Finance snapshots and is not continuously streamed; intra-day price movements between queries are not reflected.
+- **LLM output variability:** Gemini-generated analysis (risk, growth, sentiment) may vary slightly between runs for the same company due to the probabilistic nature of large language models.
+
+---
+
 ## Future Improvements
 
-- [ ] Alpha Vantage / FMP paid API for richer fundamentals
-- [ ] User authentication (NextAuth.js) for personal watchlists
-- [ ] Real-time price data integration (WebSocket)
-- [ ] Email report delivery
-- [ ] SEC filing direct parser (EDGAR XBRL)
-- [ ] Portfolio-level analysis across multiple stocks
-- [ ] Custom LLM model selection (OpenAI GPT-4o, Claude)
-- [ ] Mobile-responsive trading dashboard
+- [ ] **Alpha Vantage / FMP paid API for richer fundamentals** — Replaces public Yahoo Finance endpoints with verified, rate-limit-free data, improving reliability and unlocking deeper metrics such as earnings call transcripts and institutional ownership.
+- [ ] **User authentication (NextAuth.js) for personal watchlists** — Allows individual users to save, tag, and track their own research history, making the platform useful as an ongoing portfolio research tool rather than a one-off lookup.
+- [ ] **Real-time price data integration (WebSocket)** — Streams live bid/ask and tick data into the terminal UI, enabling users to correlate AI research findings with live market behaviour without switching to another platform.
+- [ ] **Email report delivery** — Automatically dispatches the full PDF research report to a user's inbox after analysis completes, improving shareability for investment teams and personal record-keeping.
+- [ ] **SEC filing direct parser (EDGAR XBRL)** — Parses 10-K and 10-Q filings directly from EDGAR, adding primary-source financial validation that reduces reliance on third-party data aggregators.
+- [ ] **Portfolio-level analysis across multiple stocks** — Runs the agent across an entire watchlist in batch mode, surfacing cross-portfolio risk concentration and correlation insights rather than analysing companies in isolation.
+- [ ] **Custom LLM model selection (OpenAI GPT-4o, Claude)** — Lets users choose their preferred LLM backend, enabling cost/capability trade-offs and reducing vendor lock-in to a single AI provider.
+- [ ] **Mobile-responsive trading dashboard** — Adapts the terminal layout to smaller screens, broadening the accessible audience and allowing researchers to review reports on the go.
