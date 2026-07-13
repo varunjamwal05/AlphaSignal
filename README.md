@@ -1,10 +1,15 @@
-# HiddenEdge — AI Investment Research Terminal
+<div align="center">
+
+# 📈 HiddenEdge
+**AI Investment Research Terminal**
 
 > Production-grade AI-powered investment research platform built with Next.js 15, LangGraph.js, Google Gemini, PostgreSQL (Supabase), and Recharts. Styled as a full trading terminal experience.
 
 ---
 
-## Overview
+</div>
+
+## 📖 Overview
 
 HiddenEdge is an autonomous investment research agent that researches any publicly listed company and delivers a transparent, evidence-backed investment recommendation (**INVEST / WATCH / PASS**). The UI is designed to feel like a professional trading terminal — inspired by Bloomberg Terminal and TradingView — with live-animated stock cards, scrolling ticker tapes, candlestick chart backgrounds, and monospace data displays.
 
@@ -19,34 +24,34 @@ HiddenEdge is an autonomous investment research agent that researches any public
 
 ---
 
-## Screenshots
+## 📸 Screenshots
 
 > Landing page — animated stock cards, candlestick chart background, terminal-style search bar
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 15 (App Router, React 19) |
-| Language | TypeScript (Strict) |
-| Styling | Custom CSS Design System (Space Grotesk + JetBrains Mono) |
-| AI Orchestration | LangGraph.js + LangChain.js |
-| LLM | Google Gemini 2.0 Flash |
-| Database | PostgreSQL (Supabase) + Prisma ORM 6 |
-| Data Fetching | Yahoo Finance via `yahoo-finance2` |
-| State Management | TanStack React Query v5 |
-| Charts | Recharts |
-| Validation | Zod |
-| Export | jsPDF + html2canvas |
-| Deployment | Vercel |
+| **Framework** | Next.js 15 (App Router, React 19) |
+| **Language** | TypeScript (Strict) |
+| **Styling** | Custom CSS Design System (Space Grotesk + JetBrains Mono) |
+| **AI Orchestration** | LangGraph.js + LangChain.js |
+| **LLM** | Google Gemini 2.0 Flash |
+| **Database** | PostgreSQL (Supabase) + Prisma ORM 6 |
+| **Data Fetching** | Yahoo Finance via `yahoo-finance2` |
+| **State Management** | TanStack React Query v5 |
+| **Charts** | Recharts |
+| **Validation** | Zod |
+| **Export** | jsPDF + html2canvas |
+| **Deployment** | Vercel |
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │  Next.js 15 App Router                                  │
 │  ┌──────────────┐ ┌──────────────┐ ┌─────────────────┐ │
@@ -79,9 +84,9 @@ HiddenEdge is an autonomous investment research agent that researches any public
 
 ---
 
-## Folder Structure
+## 📂 Folder Structure
 
-```
+```text
 src/
 ├── app/
 │   ├── page.tsx                  # Trading terminal landing page
@@ -112,9 +117,9 @@ src/
 
 ---
 
-## LangGraph Workflow
+## 🔄 LangGraph Workflow
 
-```
+```text
 START
   ↓
 Planner Node           — sets research strategy & tool list
@@ -144,15 +149,15 @@ END
 
 ---
 
-## Scoring System
+## 📊 Scoring System
 
 | Dimension | Weight | How Scored |
 |---|---|---|
-| Financial Health | 30% | Operating margin, FCF, debt/equity, ROE, revenue growth |
-| Growth Outlook | 25% | Innovation, competitive advantages, AI strategy (Gemini) |
-| Risk Assessment | 20% | Inverted risk score (lower risk = higher score) |
-| News Sentiment | 15% | Normalized sentiment score from -1.0 to 1.0 |
-| Valuation | 10% | PE ratio, PEG ratio, EV/EBITDA vs industry benchmarks |
+| **Financial Health** | 30% | Operating margin, FCF, debt/equity, ROE, revenue growth |
+| **Growth Outlook** | 25% | Innovation, competitive advantages, AI strategy (Gemini) |
+| **Risk Assessment** | 20% | Inverted risk score (lower risk = higher score) |
+| **News Sentiment** | 15% | Normalized sentiment score from -1.0 to 1.0 |
+| **Valuation** | 10% | PE ratio, PEG ratio, EV/EBITDA vs industry benchmarks |
 
 **Recommendation Thresholds:**
 - Score ≥ 65 → **INVEST** 🟢
@@ -161,7 +166,7 @@ END
 
 ---
 
-## Setup
+## 🚀 Setup
 
 ### Prerequisites
 - Node.js 18+
@@ -212,10 +217,10 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Environment Variables
+## 🔐 Environment Variables
 
 | Variable | Required | Description |
-|---|---|---|
+|---|:---:|---|
 | `DATABASE_URL` | ✅ | PostgreSQL connection string (use session pooler port 5432 for Supabase) |
 | `DIRECT_URL` | ✅ | Direct connection for Prisma migrations (same as DATABASE_URL for Supabase session pooler) |
 | `GEMINI_API_KEY` | ✅ | Google AI Studio API key |
@@ -223,10 +228,10 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## API Reference
+## 📡 API Reference
 
 | Endpoint | Method | Description |
-|---|---|---|
+|---|:---:|---|
 | `/api/research` | POST | Start research (SSE stream). Body: `{ company: string }` |
 | `/api/history` | GET | Get 50 most recent research reports |
 | `/api/compare` | GET | Compare two companies. Query: `?c1=AAPL&c2=MSFT` |
@@ -244,7 +249,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## UI — Trading Terminal Design System
+## 🎨 UI — Trading Terminal Design System
 
 The UI uses a custom trading terminal design system (no component library):
 
@@ -268,7 +273,7 @@ The UI uses a custom trading terminal design system (no component library):
 
 ---
 
-## Deployment (Vercel)
+## ☁️ Deployment (Vercel)
 
 1. Push to GitHub
 2. Import project at [vercel.com](https://vercel.com)
@@ -278,7 +283,7 @@ The UI uses a custom trading terminal design system (no component library):
 
 ---
 
-## Trade-offs & Design Decisions
+## ⚖️ Trade-offs & Design Decisions
 
 - **5-tier company resolver:** Direct ticker → Yahoo search → Known map → Partial match → **LLM spell correction** (handles typos like "mircosoft" → "Microsoft")
 - **yahoo-finance2 without a paid API key:** Uses public endpoints — may hit rate limits under heavy traffic. For production scale, use Alpha Vantage or Financial Modeling Prep.
@@ -289,11 +294,9 @@ The UI uses a custom trading terminal design system (no component library):
 
 ---
 
-## Example Runs
+## 📝 Example Runs
 
 > The following are realistic sample executions demonstrating how the agent processes different companies and produces structured investment recommendations.
-
----
 
 ### Example 1 — Apple Inc. (AAPL)
 
@@ -367,7 +370,7 @@ The UI uses a custom trading terminal design system (no component library):
 
 ---
 
-## Current Limitations
+## ⚠️ Current Limitations
 
 - **Yahoo Finance public endpoints:** The `yahoo-finance2` library relies on unauthenticated public endpoints, which may be rate-limited or temporarily unavailable under heavy concurrent traffic.
 - **News coverage:** Article retrieval depends on what Yahoo Finance indexes publicly; niche or small-cap companies may return sparse news, affecting sentiment accuracy.
@@ -378,7 +381,7 @@ The UI uses a custom trading terminal design system (no component library):
 
 ---
 
-## Future Improvements
+## 🔮 Future Improvements
 
 - [ ] **Alpha Vantage / FMP paid API for richer fundamentals** — Replaces public Yahoo Finance endpoints with verified, rate-limit-free data, improving reliability and unlocking deeper metrics such as earnings call transcripts and institutional ownership.
 - [ ] **User authentication (NextAuth.js) for personal watchlists** — Allows individual users to save, tag, and track their own research history, making the platform useful as an ongoing portfolio research tool rather than a one-off lookup.
